@@ -107,7 +107,7 @@
       <div class="mt-6 pt-4 border-t border-slate-100 text-center">
         <p class="text-[11px] text-slate-400 flex items-center justify-center gap-1.5">
           <i class="fa-solid fa-circle-info text-indigo-500"></i>
-          Sila dapatkan kata laluan rasmi daripada pentadbir bertugas.
+          Sila dapatkan kata laluan rasmi daripada Admin.
         </p>
       </div>
 
@@ -142,7 +142,7 @@
         
         <button onclick="loadRecordsFromCloud(true)" class="p-1.5 px-2 bg-indigo-800 hover:bg-indigo-700 text-indigo-200 rounded-lg text-xs font-medium transition flex items-center gap-1.5" title="Muat semula data dari Google Sheet">
           <i id="refreshIcon" class="fa-solid fa-rotate"></i>
-          <span>Refresh</span>
+          <span>Kemaskini</span>
         </button>
 
         <!-- Butang Log Keluar -->
@@ -167,7 +167,7 @@
         <div class="border-b border-slate-100 pb-4 mb-6">
           <div class="inline-flex items-center gap-2 text-indigo-600 font-semibold text-xs tracking-wider uppercase mb-1">
             <i class="fa-solid fa-pen-to-square"></i>
-            Entri Rekod Baharu
+            Entri Rekod
           </div>
           <h2 class="text-xl font-bold text-slate-900">Borang Kehadiran Kedatangan</h2>
           <p class="text-xs text-slate-500 mt-1">Sila isi maklumat sesi bertugas dengan lengkap dan telus.</p>
@@ -304,11 +304,11 @@
           <div class="pt-2">
             <button type="submit" id="btnSubmit" class="w-full py-3.5 px-4 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-semibold rounded-xl shadow-md shadow-indigo-600/20 transition flex items-center justify-center gap-2 group">
               <i class="fa-solid fa-cloud-arrow-up text-indigo-200 group-hover:scale-110 transition-transform"></i>
-              <span>Simpan & Hantar Ke Google Sheet</span>
+              <span>Simpan</span>
             </button>
             <p class="text-[11px] text-center text-slate-400 mt-2">
               <i class="fa-solid fa-lock text-[10px] mr-1"></i>
-              Data disimpan ke Cloud secara selamat. Akses Google Sheet dihadkan kepada Admin sahaja.
+              Data disimpan ke Cloud. Diselia oleh Admin sahaja.
             </p>
           </div>
         </form>
@@ -324,8 +324,32 @@
               <i class="fa-solid fa-chart-pie"></i>
               Analisis Jam Terkumpul
             </div>
-            <h2 class="text-xl font-bold text-slate-900">Laporan Prestasi Bertugas</h2>
+            <h2 class="text-xl font-bold text-slate-900" id="visualisationTitle">Visualisasi Prestasi Bertugas</h2>
             <p class="text-xs text-slate-500">Pecahan Mingguan (Maksimum <strong>20 Jam</strong>/minggu) & Sebulan (Maksimum <strong>80 Jam</strong>)</p>
+          </div>
+
+          <!-- Butang Tindakan Pantas -->
+          <div class="flex items-center gap-2">
+            <button onclick="exportToCSV()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition inline-flex items-center gap-1.5" title="Eksport data dalam peranti sebagai CSV">
+              <i class="fa-solid fa-file-csv text-slate-500"></i>
+              <span>Eksport CSV</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Kad-Kad Visualisasi Mengikut Petugas (Grid) -->
+        <div id="staffCardsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Kad akan dijana secara dinamik oleh JavaScript untuk petugas yang log masuk atau semua petugas (Admin) -->
+        </div>
+
+        <!-- Tab & Jadual Rekod Terkini -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <i class="fa-solid fa-list-check text-indigo-600"></i>
+              Log Kehadiran Terkini (<span id="totalRecordsCount">0</span> Rekod)
+            </h3>
+            <span class="text-xs text-slate-400" id="tableFilterLabel">Dikemaskini secara langsung</span>
           </div>
 
           <!-- Butang Tindakan Pantas -->
@@ -371,7 +395,7 @@
           <div id="emptyTableMessage" class="p-8 text-center text-slate-400">
             <i class="fa-solid fa-folder-open text-3xl mb-2 text-slate-300"></i>
             <p class="text-xs font-medium">Belum ada sebarang rekod kehadiran dimasukkan.</p>
-            <p class="text-[11px] text-slate-400">Borang di sebelah sedia bersih untuk diisi.</p>
+            <p class="text-[11px] text-slate-400">Sila isi di borang.</p>
           </div>
         </div>
 
@@ -395,11 +419,11 @@
     // ================= TETAPAN KESELAMATAN (HASH SHA-256) =================
     // Rentetan hash ini TIDAK menunjukkan kata laluan sebenar walaupun dilihat melalui 'View Source'.
     // Nilai asal:
-    // - Petugas (DEFAULT_STAFF):
-    // - Admin: 
+    // - Petugas (DEFAULT_STAFF): tugas123
+    // - Admin: admin2026
     const PASSWORD_HASHES = {
       "DEFAULT_STAFF": "b54a006c31a43ea6537c92e14431e610f7e0a6bdb4db53d0d2a368ffc1509283",
-      "Admin": "6051fc84a7a0d74c225fb18a496b09952da5642e60723ecae543298edd7d82d6"
+      "Admin": "00a52df04b7ea28cf7e8ee44db1ae871dcf8780288eb62d8548a33bd82c8152c"
     };
 
     // Fungsi kriptografi Web Crypto API untuk menukar teks ke SHA-256
@@ -513,6 +537,8 @@
         userBadge.classList.add('flex');
         userNameText.innerText = savedUser;
         lockStaffField(savedUser);
+        renderStaffVisualisation();
+        renderRecordsTable();
       } else {
         loginScreen.classList.remove('hidden');
         userBadge.classList.add('hidden');
@@ -550,6 +576,8 @@
         document.getElementById('currentUserNameText').innerText = selectedUser;
 
         lockStaffField(selectedUser);
+        renderStaffVisualisation();
+        renderRecordsTable();
         showToast(`Selamat bertugas, ${selectedUser}!`, "success");
       } else {
         errText.innerText = "Kata laluan salah. Sila masukkan kata laluan yang betul.";
@@ -578,6 +606,8 @@
       document.getElementById('loginScreen').classList.remove('hidden');
       document.getElementById('currentUserBadge').classList.add('hidden');
       document.getElementById('currentUserBadge').classList.remove('flex');
+      renderStaffVisualisation();
+      renderRecordsTable();
       showToast("Anda telah berjaya log keluar.", "info");
     }
 
@@ -770,7 +800,28 @@
     // Render Kad Visualisasi Mengikut Setiap Petugas
     function renderStaffVisualisation() {
       const container = document.getElementById('staffCardsGrid');
+      const titleElem = document.getElementById('visualisationTitle');
+      if (!container) return;
       container.innerHTML = "";
+
+      // Tentukan senarai petugas yang akan dipaparkan berdasarkan status log masuk:
+      // Jika Admin: Papar semua 10 orang petugas
+      // Jika Petugas Biasa: Papar HANYA nama petugas tersebut sahaja
+      let displayStaffList = [];
+      if (authenticatedUser === "Admin") {
+        displayStaffList = STAFF_LIST;
+        if (titleElem) titleElem.innerText = "Visualisasi Prestasi Bertugas (Semua Petugas)";
+        container.className = "grid grid-cols-1 sm:grid-cols-2 gap-4";
+      } else if (authenticatedUser && STAFF_LIST.includes(authenticatedUser)) {
+        displayStaffList = [authenticatedUser];
+        if (titleElem) titleElem.innerText = `Prestasi Bertugas (${authenticatedUser})`;
+        container.className = "grid grid-cols-1 gap-4"; // Lebih luas untuk paparan individu
+      } else {
+        // Fallback jika belum log masuk
+        displayStaffList = STAFF_LIST;
+        if (titleElem) titleElem.innerText = "Visualisasi Prestasi Bertugas";
+        container.className = "grid grid-cols-1 sm:grid-cols-2 gap-4";
+      }
 
       const selectedDateVal = document.getElementById('dutyDate').value;
       const refDate = selectedDateVal ? new Date(selectedDateVal) : new Date();
@@ -781,7 +832,7 @@
       const totalDaysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
       const totalWeeksInMonth = getWeekOfMonth(new Date(currentYear, currentMonth, totalDaysInMonth));
 
-      STAFF_LIST.forEach(staff => {
+      displayStaffList.forEach(staff => {
         const staffRecords = records.filter(r => r.staffName === staff);
 
         const dateStr = selectedDateVal;
@@ -842,7 +893,7 @@
               </div>
               <div>
                 <h4 class="font-bold text-sm text-slate-800">${staff}</h4>
-                <span class="text-[10px] text-slate-400">Petugas Aktif</span>
+                <span class="text-[10px] text-slate-400">${authenticatedUser === staff ? 'Akaun Anda (Log Masuk)' : 'Petugas Aktif'}</span>
               </div>
             </div>
             <!-- Jam Pada Tarikh Dipilih -->
@@ -897,18 +948,29 @@
       const tbody = document.getElementById('recordsTableBody');
       const emptyMsg = document.getElementById('emptyTableMessage');
       const countBadge = document.getElementById('totalRecordsCount');
+      const filterLabel = document.getElementById('tableFilterLabel');
       
-      countBadge.innerText = records.length;
       tbody.innerHTML = "";
 
-      if (records.length === 0) {
+      // Tapis rekod: jika Admin, papar semua. Jika petugas biasa, papar rekod miliknya sahaja
+      let filteredRecords = records;
+      if (authenticatedUser && authenticatedUser !== "Admin") {
+        filteredRecords = records.filter(r => r.staffName === authenticatedUser);
+        if (filterLabel) filterLabel.innerText = `Memaparkan rekod untuk ${authenticatedUser}`;
+      } else {
+        if (filterLabel) filterLabel.innerText = "Memaparkan semua rekod (Admin)";
+      }
+
+      countBadge.innerText = filteredRecords.length;
+
+      if (filteredRecords.length === 0) {
         emptyMsg.classList.remove('hidden');
         return;
       } else {
         emptyMsg.classList.add('hidden');
       }
 
-      records.forEach((item) => {
+      filteredRecords.forEach((item) => {
         const tr = document.createElement('tr');
         tr.className = "hover:bg-slate-50/80 transition border-b border-slate-100";
 
@@ -937,15 +999,20 @@
       });
     }
 
-    // Eksport Rekod Ke Fail CSV
+    // Eksport Rekod Ke Fail CSV (Eksport rekod mengikut hak akses yang sedang log masuk)
     function exportToCSV() {
-      if (records.length === 0) {
+      let exportData = records;
+      if (authenticatedUser && authenticatedUser !== "Admin") {
+        exportData = records.filter(r => r.staffName === authenticatedUser);
+      }
+
+      if (exportData.length === 0) {
         showToast("Tiada data rekod untuk dieksport.", "warning");
         return;
       }
 
       let csv = "Nama Petugas,Hari dan Tarikh,Masa Mula,Masa Tamat,Jumlah Jam,Tugasan Dijalankan,Timestamp\n";
-      records.forEach(r => {
+      exportData.forEach(r => {
         const cleanTask = `"${r.task.replace(/"/g, '""')}"`;
         const dateClean = `"${cleanDateToDayAndDate(r.dutyDate)}"`;
         csv += `"${r.staffName}",${dateClean},"${r.formattedStart}","${r.formattedEnd}","${r.duration}",${cleanTask},"${r.timestamp}"\n`;
@@ -955,7 +1022,8 @@
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.setAttribute("href", url);
-      link.setAttribute("download", `Rekod_Kehadiran_Bertugas_${new Date().toISOString().slice(0,10)}.csv`);
+      const fileNameSuffix = authenticatedUser === "Admin" ? "Semua_Petugas" : authenticatedUser;
+      link.setAttribute("download", `Rekod_Kehadiran_${fileNameSuffix}_${new Date().toISOString().slice(0,10)}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
