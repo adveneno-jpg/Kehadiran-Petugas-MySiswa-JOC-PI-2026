@@ -956,7 +956,7 @@
       let filteredRecords = records;
       if (authenticatedUser && authenticatedUser !== "Admin") {
         filteredRecords = records.filter(r => r.staffName === authenticatedUser);
-        if (filterLabel) filterLabel.innerText = `Memaparkan rekod untuk ${authenticatedUser}`;
+        if (filterLabel) filterLabel.innerText = `Memaparkan rekod Petugas: ${authenticatedUser}`;
       } else {
         if (filterLabel) filterLabel.innerText = "Memaparkan semua rekod (Admin)";
       }
